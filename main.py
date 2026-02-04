@@ -1,133 +1,142 @@
-import os
+import tkinter as tk
+from tkinter import filedialog, messagebox, ttk
 import cv2
 import numpy as np
-import tkinter as tk
-from tkinter import filedialog, messagebox
 from PIL import Image, ImageTk
+import os
+from collections import deque
 
 
-# ----------------------------
-# Class 1: History (Undo/Redo)
-# ----------------------------
-class HistoryManager:
-    def __init__(self, max_states=30):
-        self.undo_stack = []
-        self.redo_stack = []
-        self.max_states = max_states
+class ImageProcessor:
+    """ img handles using OpenCV"""
 
-    def push(self, image: np.ndarray):
-        """Save current state for undo; clear redo stack."""
-        if image is None:
-            return
+    def __init__(self, image_path=None):
+        self.original_image = None
+        self.current_image = None
+        self.image_path = image_path
+
+        if image_path:
+            self.load_image(image_path)
+
+    def load_image(self, image_path):
+        self.original_image = cv2.imread(image_path)
+        if self.original_image is None:
+            raise ValueError(f"Could not load image from {image_path}")
+        self.current_image = self.original_image.copy()
+        self.image_path = image_path
+
+    def save_image(self, file_path):
+        if self.current_image is None:
+            raise ValueError("No image to save")
+        if not cv2.imwrite(file_path, self.current_image):
+            raise ValueError("Failed to save image")
+
+    def get_image_info(self):
+        if self.current_image is None:
+            return None
+        h, w = self.current_image.shape[:2]
+        filename = os.path.basename(self.image_path) if self.image_path else "Unknown"
+        return {
+            "filename": filename,
+            "width": w,
+            "height": h,
+            "dimensions": f"{w}x{h}"
+        }
+
+    def reset_to_original(self):
+        self.current_image = self.original_image.copy()
+
+    def grayscale(self):
+        gray = cv2.cvtColor(self.current_image, cv2.COLOR_BGR2GRAY)
+        self.current_image = cv2.cvtColor(gray, cv2.COLOR_GRAY2BGR)
+
+    def blur(self, intensity):
+        intensity = max(3, int(float(intensity)))  # FIX
+        if intensity % 2 == 0:
+            intensity += 1
+        self.current_image = cv2.GaussianBlur(
+            self.current_image, (intensity, intensity), 0)
+
+
+
+    def edge_detection(self):
+        gray = cv2.cvtColor(self.current_image, cv2.COLOR_BGR2GRAY)
+        edges = cv2.Canny(gray, 100, 200)
+        self.current_image = cv2.cvtColor(edges, cv2.COLOR_GRAY2BGR)
+
+    def adjust_brightness(self, factor):
+        self.current_image = cv2.convertScaleAbs(self.current_image, alpha=factor)
+
+    def adjust_contrast(self, factor):
+        self.current_image = cv2.convertScaleAbs(self.current_image, alpha=factor)
+
+    def rotate_image(self, angle):
+        if angle == 90:
+            self.current_image = cv2.rotate(self.current_image, cv2.ROTATE_90_CLOCKWISE)
+        elif angle == 180:
+            self.current_image = cv2.rotate(self.current_image, cv2.ROTATE_180)
+        elif angle == 270:
+            self.current_image = cv2.rotate(self.current_image, cv2.ROTATE_90_COUNTERCLOCKWISE)
+
+    def flip_image(self, direction):
+        if direction == "horizontal":
+            self.current_image = cv2.flip(self.current_image, 1)
+        else:
+            self.current_image = cv2.flip(self.current_image, 0)
+
+    def resize_image(self, width, height):
+        self.current_image = cv2.resize(self.current_image, (int(width), int(height)))
+
+
+class ImageHistory:
+    def __init__(self, max_history=20):
+        self.undo_stack = deque(maxlen=max_history)
+        self.redo_stack = deque(maxlen=max_history)
+
+    def save_state(self, image):
         self.undo_stack.append(image.copy())
-        if len(self.undo_stack) > self.max_states:
-            self.undo_stack.pop(0)
         self.redo_stack.clear()
 
-    def undo(self, current: np.ndarray):
-        if not self.undo_stack or current is None:
-            return current
-        self.redo_stack.append(current.copy())
-        return self.undo_stack.pop()
+    def undo(self):
+        if len(self.undo_stack) > 1:
+            self.redo_stack.append(self.undo_stack.pop())
+            return self.undo_stack[-1].copy()
+        return None
 
-    def redo(self, current: np.ndarray):
-        if not self.redo_stack or current is None:
-            return current
-        self.undo_stack.append(current.copy())
-        return self.redo_stack.pop()
+    def redo(self):
+        if self.redo_stack:
+            img = self.redo_stack.pop()
+            self.undo_stack.append(img.copy())
+            return img.copy()
+        return None
 
+    def can_undo(self):
+        return len(self.undo_stack) > 1
 
-# ---------------------------------
-# Class 2: Image Processing (OpenCV)
-# ---------------------------------
-class ImageProcessor:
-    def __init__(self):
-        self._image = None  # encapsulated image
+    def can_redo(self):
+        return len(self.redo_stack) > 0
 
-    def set_image(self, img: np.ndarray):
-        self._image = img
-
-    def get_image(self):
-        return self._image
-
-    def load(self, path: str) -> np.ndarray:
-        img = cv2.imread(path)
-        if img is None:
-            raise ValueError("Unsupported file or image could not be read.")
-        self._image = img
-        return img
-
-    def to_grayscale(self) -> np.ndarray:
-        return cv2.cvtColor(self._image, cv2.COLOR_BGR2GRAY)
-
-    def gaussian_blur(self, k: int) -> np.ndarray:
-        # kernel must be odd and >= 1
-        if k < 1:
-            k = 1
-        if k % 2 == 0:
-            k += 1
-        return cv2.GaussianBlur(self._image, (k, k), 0)
-
-    def canny_edges(self, low=100, high=200) -> np.ndarray:
-        gray = cv2.cvtColor(self._image, cv2.COLOR_BGR2GRAY)
-        return cv2.Canny(gray, low, high)
-
-    def adjust_brightness(self, beta: int) -> np.ndarray:
-        # beta: -100..100 typical
-        return cv2.convertScaleAbs(self._image, alpha=1.0, beta=beta)
-
-    def adjust_contrast(self, alpha: float) -> np.ndarray:
-        # alpha: 0.5..3.0 typical
-        return cv2.convertScaleAbs(self._image, alpha=alpha, beta=0)
-
-    def rotate(self, angle: int) -> np.ndarray:
-        if angle == 90:
-            return cv2.rotate(self._image, cv2.ROTATE_90_CLOCKWISE)
-        if angle == 180:
-            return cv2.rotate(self._image, cv2.ROTATE_180)
-        if angle == 270:
-            return cv2.rotate(self._image, cv2.ROTATE_90_COUNTERCLOCKWISE)
-        raise ValueError("Angle must be 90, 180, or 270.")
-
-    def flip(self, direction: str) -> np.ndarray:
-        # horizontal -> 1, vertical -> 0
-        if direction == "horizontal":
-            return cv2.flip(self._image, 1)
-        if direction == "vertical":
-            return cv2.flip(self._image, 0)
-        raise ValueError("Direction must be 'horizontal' or 'vertical'.")
-
-    def scale(self, factor: float) -> np.ndarray:
-        if factor <= 0:
-            factor = 1.0
-        h, w = self._image.shape[:2]
-        new_w = max(1, int(w * factor))
-        new_h = max(1, int(h * factor))
-        return cv2.resize(self._image, (new_w, new_h), interpolation=cv2.INTER_AREA)
+    def clear(self):
+        self.undo_stack.clear()
+        self.redo_stack.clear()
 
 
-# -----------------------------------
-# Class 3: GUI (Tkinter + Interaction)
-# -----------------------------------
-class ImageEditorGUI:
-    def __init__(self, root: tk.Tk):
+class ImageApp:
+    def __init__(self, root):
         self.root = root
-        self.root.title("HIT137 Image Editor")
-        self.root.geometry("1000x650")
+        self.root.title("Image Processing Application")
+        self.root.geometry("1200x800")
 
-        # class interaction
-        self.processor = ImageProcessor()
-        self.history = HistoryManager()
+        self.processor = None
+        self.history = ImageHistory()
+        self.display_image = None
+        self.preview_base = None  # FIX: preview state
 
-        self.current_image = None
-        self.current_path = None
+        self._create_menu_bar()
+        self._create_main_layout()
+        self._update_ui_state()
 
-        self._build_menu()
-        self._build_layout()
-        self._update_status("No image loaded")
-
-    # ---------- UI BUILD ----------
-    def _build_menu(self):
+    def _create_menu_bar(self):
         menubar = tk.Menu(self.root)
         self.root.config(menu=menubar)
 
@@ -135,234 +144,248 @@ class ImageEditorGUI:
         menubar.add_cascade(label="File", menu=file_menu)
         file_menu.add_command(label="Open", command=self.open_image)
         file_menu.add_command(label="Save", command=self.save_image)
-        file_menu.add_command(label="Save As", command=self.save_as)
+        file_menu.add_command(label="Save As", command=self.save_image_as)
         file_menu.add_separator()
         file_menu.add_command(label="Exit", command=self.root.quit)
 
         edit_menu = tk.Menu(menubar, tearoff=0)
         menubar.add_cascade(label="Edit", menu=edit_menu)
-        edit_menu.add_command(label="Undo", command=self.undo)
-        edit_menu.add_command(label="Redo", command=self.redo)
+        edit_menu.add_command(label="Undo", command=self.undo_action)
+        edit_menu.add_command(label="Redo", command=self.redo_action)
+        edit_menu.add_separator()
+        edit_menu.add_command(label="Reset to Original", command=self.reset_image)
 
-    def _build_layout(self):
-        # left image display
-        self.display_frame = tk.Frame(self.root, padx=10, pady=10)
-        self.display_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+    def _create_main_layout(self):
+        main_container = ttk.Frame(self.root)
+        main_container.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
 
-        self.image_label = tk.Label(self.display_frame, bg="#222", width=70, height=30)
-        self.image_label.pack(fill=tk.BOTH, expand=True)
+        left_frame = ttk.Frame(main_container)
+        left_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
-        # right control panel
-        self.panel = tk.Frame(self.root, padx=10, pady=10)
-        self.panel.pack(side=tk.RIGHT, fill=tk.Y)
+        self.canvas = tk.Canvas(left_frame, bg="gray20")
+        self.canvas.pack(fill=tk.BOTH, expand=True)
 
-        tk.Label(self.panel, text="Controls", font=("Arial", 14, "bold")).pack(pady=(0, 10))
+        right_frame = ttk.Frame(main_container, width=250)
+        right_frame.pack(side=tk.RIGHT, fill=tk.BOTH, padx=(5, 0))
+        right_frame.pack_propagate(False)
 
-        tk.Button(self.panel, text="Grayscale", command=self.apply_grayscale).pack(fill=tk.X, pady=2)
-        tk.Button(self.panel, text="Edge Detection (Canny)", command=self.apply_edges).pack(fill=tk.X, pady=2)
+        self._create_control_panel(right_frame)
+        self._create_status_bar()
 
-        tk.Label(self.panel, text="Blur (kernel size)").pack(pady=(10, 0))
-        self.blur_slider = tk.Scale(self.panel, from_=1, to=31, orient=tk.HORIZONTAL, command=self.apply_blur)
-        self.blur_slider.set(1)
-        self.blur_slider.pack(fill=tk.X)
+    def _create_control_panel(self, parent):
+        title_label = ttk.Label(parent, text="Image Effects", font=("Arial", 12, "bold"))
+        title_label.pack(pady=10)
 
-        tk.Label(self.panel, text="Brightness (-100 to 100)").pack(pady=(10, 0))
-        self.brightness_slider = tk.Scale(self.panel, from_=-100, to=100, orient=tk.HORIZONTAL, command=self.apply_brightness)
-        self.brightness_slider.set(0)
-        self.brightness_slider.pack(fill=tk.X)
+        ttk.Separator(parent, orient=tk.HORIZONTAL).pack(fill=tk.X, pady=5)
 
-        tk.Label(self.panel, text="Contrast (0.5 to 3.0)").pack(pady=(10, 0))
-        self.contrast_slider = tk.Scale(self.panel, from_=0.5, to=3.0, resolution=0.1,
-                                        orient=tk.HORIZONTAL, command=self.apply_contrast)
-        self.contrast_slider.set(1.0)
-        self.contrast_slider.pack(fill=tk.X)
+        blur_frame = ttk.LabelFrame(parent, text="Blur Intensity", padding=10)
+        blur_frame.pack(fill=tk.X, pady=5)
 
-        tk.Label(self.panel, text="Rotate").pack(pady=(10, 0))
-        tk.Button(self.panel, text="Rotate 90°", command=lambda: self.apply_rotate(90)).pack(fill=tk.X, pady=2)
-        tk.Button(self.panel, text="Rotate 180°", command=lambda: self.apply_rotate(180)).pack(fill=tk.X, pady=2)
-        tk.Button(self.panel, text="Rotate 270°", command=lambda: self.apply_rotate(270)).pack(fill=tk.X, pady=2)
-
-        tk.Label(self.panel, text="Flip").pack(pady=(10, 0))
-        tk.Button(self.panel, text="Flip Horizontal", command=lambda: self.apply_flip("horizontal")).pack(fill=tk.X, pady=2)
-        tk.Button(self.panel, text="Flip Vertical", command=lambda: self.apply_flip("vertical")).pack(fill=tk.X, pady=2)
-
-        tk.Label(self.panel, text="Resize/Scale").pack(pady=(10, 0))
-        tk.Button(self.panel, text="Scale 50%", command=lambda: self.apply_scale(0.5)).pack(fill=tk.X, pady=2)
-        tk.Button(self.panel, text="Scale 150%", command=lambda: self.apply_scale(1.5)).pack(fill=tk.X, pady=2)
-
-        # status bar
-        self.status = tk.Label(self.root, text="", anchor="w")
-        self.status.pack(side=tk.BOTTOM, fill=tk.X)
-
-    # ---------- HELPERS ----------
-    def _ensure_image_loaded(self):
-        if self.current_image is None:
-            messagebox.showerror("Error", "No image loaded. Please open an image first.")
-            return False
-        return True
-
-    def _update_status(self, text: str):
-        self.status.config(text=text)
-
-    def _set_image(self, img: np.ndarray):
-        """Update current image + processor image + display + status."""
-        self.current_image = img
-        self.processor.set_image(img)
-        self._display_image(img)
-        self._update_image_info()
-
-    def _update_image_info(self):
-        if self.current_image is None:
-            self._update_status("No image loaded")
-            return
-        h, w = self.current_image.shape[:2]
-        name = os.path.basename(self.current_path) if self.current_path else "Unsaved image"
-        self._update_status(f"{name} | {w} x {h}")
-
-    def _display_image(self, img: np.ndarray):
-        # Convert OpenCV image to PIL then to Tkinter image
-        if img is None:
-            return
-
-        if len(img.shape) == 2:
-            rgb = cv2.cvtColor(img, cv2.COLOR_GRAY2RGB)
-        else:
-            rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-
-        pil_img = Image.fromarray(rgb)
-
-        # Resize to fit label area (simple approach)
-        label_w = 700
-        label_h = 550
-        pil_img.thumbnail((label_w, label_h))
-
-        self.tk_img = ImageTk.PhotoImage(pil_img)
-        self.image_label.config(image=self.tk_img)
-
-    # ---------- FILE MENU ----------
-    def open_image(self):
-        path = filedialog.askopenfilename(
-            filetypes=[("Image Files", "*.jpg *.jpeg *.png *.bmp")]
+        self.blur_scale = ttk.Scale(
+            blur_frame, from_=1, to=31, orient=tk.HORIZONTAL,
+            command=self._on_blur_change
         )
+        self.blur_scale.set(5)
+        self.blur_scale.pack(fill=tk.X, pady=5)
+
+        self.blur_label = ttk.Label(blur_frame, text="Value: 5")
+        self.blur_label.pack()
+
+        brightness_frame = ttk.LabelFrame(parent, text="Brightness", padding=10)
+        brightness_frame.pack(fill=tk.X, pady=5)
+
+        self.brightness_scale = ttk.Scale(
+            brightness_frame, from_=0.5, to=3.0, orient=tk.HORIZONTAL,
+            command=self._on_brightness_change
+        )
+        self.brightness_scale.set(1.0)
+        self.brightness_scale.pack(fill=tk.X, pady=5)
+
+        self.brightness_label = ttk.Label(brightness_frame, text="Value: 1.0")
+        self.brightness_label.pack()
+
+        contrast_frame = ttk.LabelFrame(parent, text="Contrast", padding=10)
+        contrast_frame.pack(fill=tk.X, pady=5)
+
+        self.contrast_scale = ttk.Scale(
+            contrast_frame, from_=0.5, to=3.0, orient=tk.HORIZONTAL,
+            command=self._on_contrast_change
+        )
+        self.contrast_scale.set(1.0)
+        self.contrast_scale.pack(fill=tk.X, pady=5)
+
+        self.contrast_label = ttk.Label(contrast_frame, text="Value: 1.0")
+        self.contrast_label.pack()
+
+        ttk.Separator(parent, orient=tk.HORIZONTAL).pack(fill=tk.X, pady=5)
+
+        ttk.Button(parent, text="Grayscale", command=self._apply_grayscale).pack(fill=tk.X, pady=3)
+        ttk.Button(parent, text="Edge Detection", command=self._apply_edge_detection).pack(fill=tk.X, pady=3)
+
+        ttk.Separator(parent, orient=tk.HORIZONTAL).pack(fill=tk.X, pady=5)
+
+        ttk.Button(parent, text="Rotate 90°", command=lambda: self._apply_rotation(90)).pack(fill=tk.X, pady=3)
+        ttk.Button(parent, text="Rotate 180°", command=lambda: self._apply_rotation(180)).pack(fill=tk.X, pady=3)
+        ttk.Button(parent, text="Rotate 270°", command=lambda: self._apply_rotation(270)).pack(fill=tk.X, pady=3)
+        ttk.Button(parent, text="Flip Horizontal", command=lambda: self._apply_flip("horizontal")).pack(fill=tk.X, pady=3)
+        ttk.Button(parent, text="Flip Vertical", command=lambda: self._apply_flip("vertical")).pack(fill=tk.X, pady=3)
+
+        ttk.Separator(parent, orient=tk.HORIZONTAL).pack(fill=tk.X, pady=5)
+
+        resize_frame = ttk.LabelFrame(parent, text="Resize", padding=10)
+        resize_frame.pack(fill=tk.X, pady=5)
+
+        ttk.Label(resize_frame, text="Width:").pack()
+        self.resize_width = ttk.Entry(resize_frame)
+        self.resize_width.pack(fill=tk.X)
+
+        ttk.Label(resize_frame, text="Height:").pack()
+        self.resize_height = ttk.Entry(resize_frame)
+        self.resize_height.pack(fill=tk.X)
+
+        ttk.Button(resize_frame, text="Apply Resize", command=self._apply_resize).pack(fill=tk.X, pady=5)
+
+    def _create_status_bar(self):
+        self.status_var = tk.StringVar(value="Ready | No image loaded")
+        ttk.Label(self.root, textvariable=self.status_var, relief=tk.SUNKEN).pack(side=tk.BOTTOM, fill=tk.X)
+
+    def _update_ui_state(self):
+        if self.processor and self.processor.current_image is not None:
+            info = self.processor.get_image_info()
+            self.status_var.set(f"Image: {info['filename']} | Dimensions: {info['dimensions']}")
+        else:
+            self.status_var.set("Ready | No image loaded")
+
+    # ---------- FILE ----------
+    def open_image(self):
+        path = filedialog.askopenfilename()
         if not path:
             return
-
-        try:
-            img = self.processor.load(path)
-            self.current_path = path
-            self.history = HistoryManager()  # reset history for new image
-            self.history.push(img)
-            self._set_image(img)
-        except Exception as e:
-            messagebox.showerror("Open Error", str(e))
+        self.processor = ImageProcessor(path)
+        self.history.clear()
+        self.history.save_state(self.processor.current_image)
+        self.preview_base = None
+        self.display_image_on_canvas()
+        self._update_ui_state()
 
     def save_image(self):
-        if not self._ensure_image_loaded():
+        if not self.processor:
+            return
+        self.processor.save_image(self.processor.image_path)
+
+    def save_image_as(self):
+        if not self.processor:
+            return
+        path = filedialog.asksaveasfilename(defaultextension=".png")
+        if path:
+            self.processor.save_image(path)
+            self.processor.image_path = path
+
+    # ---------- ACTIONS ----------
+    def reset_image(self):
+        self.processor.reset_to_original()
+        self.history.clear()
+        self.history.save_state(self.processor.current_image)
+        self.preview_base = None
+        self.display_image_on_canvas()
+
+    def undo_action(self):
+        img = self.history.undo()
+        if img is not None:
+            self.processor.current_image = img
+            self.preview_base = None
+            self.display_image_on_canvas()
+
+    def redo_action(self):
+        img = self.history.redo()
+        if img is not None:
+            self.processor.current_image = img
+            self.preview_base = None
+            self.display_image_on_canvas()
+
+    def _apply_resize(self):
+        w = int(self.resize_width.get())
+        h = int(self.resize_height.get())
+        self.history.save_state(self.processor.current_image)
+        self.processor.resize_image(w, h)
+        self.preview_base = None
+        self.display_image_on_canvas()
+        self._update_ui_state()
+
+    def _apply_rotation(self, angle):
+        self.history.save_state(self.processor.current_image)
+        self.processor.rotate_image(angle)
+        self.preview_base = None
+        self.display_image_on_canvas()
+
+    def _apply_flip(self, direction):
+        self.history.save_state(self.processor.current_image)
+        self.processor.flip_image(direction)
+        self.preview_base = None
+        self.display_image_on_canvas()
+
+    def _apply_grayscale(self):
+        self.history.save_state(self.processor.current_image)
+        self.processor.grayscale()
+        self.preview_base = None
+        self.display_image_on_canvas()
+
+    def _apply_edge_detection(self):
+        self.history.save_state(self.processor.current_image)
+        self.processor.edge_detection()
+        self.preview_base = None
+        self.display_image_on_canvas()
+
+    # ---------- SLIDERS (FIXED) ----------
+    def _on_blur_change(self, value):
+        self.blur_label.config(text=f"Value: {int(float(value))}")
+        if self.processor:
+            if self.preview_base is None:
+                self.preview_base = self.processor.current_image.copy()
+            self.processor.current_image = self.preview_base.copy()
+            self.processor.blur(value)
+            self.display_image_on_canvas()
+
+    def _on_brightness_change(self, value):
+        value = float(value)
+        self.brightness_label.config(text=f"Value: {value:.2f}")
+        if self.processor:
+            if self.preview_base is None:
+                self.preview_base = self.processor.current_image.copy()
+            self.processor.current_image = self.preview_base.copy()
+            self.processor.adjust_brightness(value)
+            self.display_image_on_canvas()
+
+    def _on_contrast_change(self, value):
+        value = float(value)
+        self.contrast_label.config(text=f"Value: {value:.2f}")
+        if self.processor:
+            if self.preview_base is None:
+                self.preview_base = self.processor.current_image.copy()
+            self.processor.current_image = self.preview_base.copy()
+            self.processor.adjust_contrast(value)
+            self.display_image_on_canvas()
+
+    # ---------- DISPLAY ----------
+    def display_image_on_canvas(self):
+        if not self.processor or self.processor.current_image is None:
             return
 
-        if not self.current_path:
-            self.save_as()
-            return
+        img_rgb = cv2.cvtColor(self.processor.current_image, cv2.COLOR_BGR2RGB)
+        pil = Image.fromarray(img_rgb)
 
-        try:
-            cv2.imwrite(self.current_path, self.current_image)
-            messagebox.showinfo("Saved", "Image saved successfully.")
-        except Exception as e:
-            messagebox.showerror("Save Error", str(e))
+        cw, ch = self.canvas.winfo_width(), self.canvas.winfo_height()
+        if cw > 1 and ch > 1:
+            pil.thumbnail((cw - 10, ch - 10))
 
-    def save_as(self):
-        if not self._ensure_image_loaded():
-            return
-
-        path = filedialog.asksaveasfilename(
-            defaultextension=".png",
-            filetypes=[("PNG", "*.png"), ("JPG", "*.jpg"), ("BMP", "*.bmp")]
-        )
-        if not path:
-            return
-
-        try:
-            cv2.imwrite(path, self.current_image)
-            self.current_path = path
-            messagebox.showinfo("Saved", "Image saved successfully.")
-            self._update_image_info()
-        except Exception as e:
-            messagebox.showerror("Save As Error", str(e))
-
-    # ---------- EDIT MENU ----------
-    def undo(self):
-        if not self._ensure_image_loaded():
-            return
-        new_img = self.history.undo(self.current_image)
-        self._set_image(new_img)
-
-    def redo(self):
-        if not self._ensure_image_loaded():
-            return
-        new_img = self.history.redo(self.current_image)
-        self._set_image(new_img)
-
-    # ---------- IMAGE FEATURES ----------
-    def apply_grayscale(self):
-        if not self._ensure_image_loaded():
-            return
-        self.history.push(self.current_image)
-        img = self.processor.to_grayscale()
-        self._set_image(img)
-
-    def apply_edges(self):
-        if not self._ensure_image_loaded():
-            return
-        self.history.push(self.current_image)
-        img = self.processor.canny_edges()
-        self._set_image(img)
-
-    def apply_blur(self, val):
-        if not self._ensure_image_loaded():
-            return
-        self.history.push(self.current_image)
-        img = self.processor.gaussian_blur(int(val))
-        self._set_image(img)
-
-    def apply_brightness(self, val):
-        if not self._ensure_image_loaded():
-            return
-        self.history.push(self.current_image)
-        img = self.processor.adjust_brightness(int(val))
-        self._set_image(img)
-
-    def apply_contrast(self, val):
-        if not self._ensure_image_loaded():
-            return
-        self.history.push(self.current_image)
-        img = self.processor.adjust_contrast(float(val))
-        self._set_image(img)
-
-    def apply_rotate(self, angle):
-        if not self._ensure_image_loaded():
-            return
-        self.history.push(self.current_image)
-        img = self.processor.rotate(angle)
-        self._set_image(img)
-
-    def apply_flip(self, direction):
-        if not self._ensure_image_loaded():
-            return
-        self.history.push(self.current_image)
-        img = self.processor.flip(direction)
-        self._set_image(img)
-
-    def apply_scale(self, factor):
-        if not self._ensure_image_loaded():
-            return
-        self.history.push(self.current_image)
-        img = self.processor.scale(factor)
-        self._set_image(img)
+        self.display_image = ImageTk.PhotoImage(pil)
+        self.canvas.delete("all")
+        self.canvas.create_image(cw // 2, ch // 2, image=self.display_image)
 
 
 def main():
     root = tk.Tk()
-    app = ImageEditorGUI(root)
+    ImageApp(root)
     root.mainloop()
 
 
