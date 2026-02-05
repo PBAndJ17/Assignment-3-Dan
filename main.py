@@ -8,7 +8,7 @@ from collections import deque
 
 
 class ImageProcessor:
-    """ img handles using OpenCV"""
+    """ Uses OpenCV to handle img processing"""
 
     def __init__(self, image_path=None):
         self.original_image = None
@@ -19,19 +19,22 @@ class ImageProcessor:
             self.load_image(image_path)
 
     def load_image(self, image_path):
+        '''Load img from file'''
         self.original_image = cv2.imread(image_path)
         if self.original_image is None:
-            raise ValueError(f"Could not load image from {image_path}")
+            raise ValueError(f"Image from {image_path} could not be loaded")
         self.current_image = self.original_image.copy()
         self.image_path = image_path
 
     def save_image(self, file_path):
+        '''Save the image to File'''
         if self.current_image is None:
             raise ValueError("No image to save")
         if not cv2.imwrite(file_path, self.current_image):
             raise ValueError("Failed to save image")
 
     def get_image_info(self):
+        '''Return the img information for the status bar'''
         if self.current_image is None:
             return None
         h, w = self.current_image.shape[:2]
@@ -44,13 +47,16 @@ class ImageProcessor:
         }
 
     def reset_to_original(self):
+        '''Reset to the original img'''
         self.current_image = self.original_image.copy()
 
     def grayscale(self):
+        '''Convert image to grayscale'''
         gray = cv2.cvtColor(self.current_image, cv2.COLOR_BGR2GRAY)
         self.current_image = cv2.cvtColor(gray, cv2.COLOR_GRAY2BGR)
 
     def blur(self, intensity):
+        '''Apply blur with adjustable intensity'''
         intensity = max(3, int(float(intensity)))  # FIX
         if intensity % 2 == 0:
             intensity += 1
