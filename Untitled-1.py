@@ -24,7 +24,12 @@ def main():
             raise ValueError(f"Could not load image from {image_path}")
         self.current_image = self.original_image.copy()
         self.image_path = image_path
-        
+
+        def save_image(self, file_path):
+        if self.current_image is None:
+            raise ValueError("No image to save")
+        if not cv2.imwrite(file_path, self.current_image):
+            raise ValueError("Failed to save image")
 
 
 if __name__ == "__main__":
