@@ -61,3 +61,17 @@ if __name__ == "__main__":
         gray = cv2.cvtColor(self.current_image, cv2.COLOR_BGR2GRAY)
         edges = cv2.Canny(gray, 100, 200)
         self.current_image = cv2.cvtColor(edges, cv2.COLOR_GRAY2BGR)
+
+    def adjust_brightness(self, factor):
+        self.current_image = cv2.convertScaleAbs(self.current_image, alpha=factor)
+
+    def adjust_contrast(self, factor):
+        self.current_image = cv2.convertScaleAbs(self.current_image, alpha=factor)
+
+    def rotate_image(self, angle):
+        if angle == 90:
+            self.current_image = cv2.rotate(self.current_image, cv2.ROTATE_90_CLOCKWISE)
+        elif angle == 180:
+            self.current_image = cv2.rotate(self.current_image, cv2.ROTATE_180)
+        elif angle == 270:
+            self.current_image = cv2.rotate(self.current_image, cv2.ROTATE_90_COUNTERCLOCKWISE)
