@@ -119,3 +119,11 @@ def clear(self):
         self.root = root
         self.root.title("Image Processing Application")
         self.root.geometry("1200x800")
+ self.processor = None
+        self.history = ImageHistory()
+        self.display_image = None
+        self.preview_base = None  # FIX: preview state
+
+        self._create_menu_bar()
+        self._create_main_layout()
+        self._update_ui_state()
