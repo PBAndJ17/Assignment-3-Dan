@@ -87,3 +87,7 @@ if __name__ == "__main__":
     def __init__(self, max_history=20):
         self.undo_stack = deque(maxlen=max_history)
         self.redo_stack = deque(maxlen=max_history)
+        def save_state(self, image):
+        '''Save image state for undo'''
+        self.undo_stack.append(image.copy())
+        self.redo_stack.clear()
