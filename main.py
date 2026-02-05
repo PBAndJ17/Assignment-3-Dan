@@ -176,6 +176,8 @@ class ImageApp:
 
         self.canvas = tk.Canvas(left_frame, bg="gray20")
         self.canvas.pack(fill=tk.BOTH, expand=True)
+        
+        self.canvas.bind("<Configure>", lambda e: self.display_image_on_canvas())
 
         if DND_AVAILABLE:
             self.canvas.drop_target_register(DND_FILES)
@@ -187,6 +189,7 @@ class ImageApp:
 
         self._create_control_panel(right_frame)
         self._create_status_bar()
+        self.display_image_on_canvas() 
 
     def _create_control_panel(self, parent):
         title_label = ttk.Label(parent, text="Image Effects", font=("Arial", 12, "bold"))
@@ -300,10 +303,10 @@ class ImageApp:
 
     def _load_image_from_path(self, path):
         try:
+            self.preview_base = None
             self.processor = ImageProcessor(path)
             self.history.clear()
             self.history.save_state(self.processor.current_image)
-            self.preview_base = None
             self.display_image_on_canvas()
             self._update_ui_state()
         except Exception as e:
@@ -377,9 +380,9 @@ class ImageApp:
         self._update_ui_state()
 
     def _apply_rotation(self, angle):
+        self.preview_base = None
         self.history.save_state(self.processor.current_image)
         self.processor.rotate_image(angle)
-        self.preview_base = None
         self.display_image_on_canvas()
 
     def _apply_flip(self, direction):
@@ -432,19 +435,29 @@ class ImageApp:
 
     # ---------- DISPLAY ----------
     def display_image_on_canvas(self):
+        self.canvas.delete("all")
+        cw, ch = self.canvas.winfo_width(), self.canvas.winfo_height()
+
+        # show text when no image
         if not self.processor or self.processor.current_image is None:
+            self.canvas.create_text(
+                cw // 2, ch // 2,
+                text="Drag & drop an image here\nor File > Open",
+                fill="white",
+                font=("Arial", 22, "bold"),
+                justify="center"
+            )
             return
 
         img_rgb = cv2.cvtColor(self.processor.current_image, cv2.COLOR_BGR2RGB)
         pil = Image.fromarray(img_rgb)
 
-        cw, ch = self.canvas.winfo_width(), self.canvas.winfo_height()
         if cw > 1 and ch > 1:
             pil.thumbnail((cw - 10, ch - 10))
 
         self.display_image = ImageTk.PhotoImage(pil)
-        self.canvas.delete("all")
         self.canvas.create_image(cw // 2, ch // 2, image=self.display_image)
+
 
 
 def main():
