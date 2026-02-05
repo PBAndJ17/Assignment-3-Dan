@@ -173,7 +173,7 @@ class ImageApp:
         left_frame = ttk.Frame(main_container)
         left_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
-        self.canvas = tk.Canvas(left_frame, bg="gray20")
+        self.canvas = tk.Canvas(left_frame, bg="darkgray")
         self.canvas.pack(fill=tk.BOTH, expand=True)
         
         self.canvas.bind("<Configure>", lambda e: self.display_image_on_canvas())
