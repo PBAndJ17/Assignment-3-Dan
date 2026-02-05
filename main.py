@@ -472,7 +472,6 @@ class ImageApp:
         self.canvas.create_image(cw // 2, ch // 2, image=self.display_image)
 
 
-
 def main():
     root = TkinterDnD.Tk() if DND_AVAILABLE else tk.Tk()
     ImageApp(root)
