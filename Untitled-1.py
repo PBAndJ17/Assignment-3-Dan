@@ -209,3 +209,9 @@ self.brightness_scale = ttk.Scale(
         self.contrast_scale = ttk.Scale(
             contrast_frame, from_=0.5, to=3.0, orient=tk.HORIZONTAL,
             command=self._on_contrast_change
+             self.contrast_scale = ttk.Scale(
+            contrast_frame, from_=0.5, to=3.0, orient=tk.HORIZONTAL,
+            command=self._on_contrast_change
+        )
+        self.contrast_scale.pack(fill=tk.X, pady=5)
+        self.contrast_scale.set(1.0)
