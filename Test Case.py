@@ -132,6 +132,8 @@ class ImageHistory:
 
 
 class ImageApp:
+
+
     
     def __init__(self, root):
         self.root = root
@@ -223,7 +225,7 @@ class ImageApp:
         self.display_image_on_canvas() 
 
     def _create_control_panel(self, parent):
-        title_label = ttk.Label(parent, text="Image Effects", font=("Arial", 12, "bold"))
+        title_label = ttk.Label(parent, text="Image Effects", font=("Times New Roman", 11, "bold"))
         title_label.pack(pady=10)
 
         ttk.Separator(parent, orient=tk.HORIZONTAL).pack(fill=tk.X, pady=5)
