@@ -113,3 +113,9 @@ def clear(self):
         '''Clear history stacks'''
         self.undo_stack.clear()
         self.redo_stack.clear()
+        class ImageApp:
+    
+    def __init__(self, root):
+        self.root = root
+        self.root.title("Image Processing Application")
+        self.root.geometry("1200x800")
