@@ -83,3 +83,7 @@ if __name__ == "__main__":
 
     def resize_image(self, width, height):
         self.current_image = cv2.resize(self.current_image, (int(width), int(height)))
+        class ImageHistory:
+    def __init__(self, max_history=20):
+        self.undo_stack = deque(maxlen=max_history)
+        self.redo_stack = deque(maxlen=max_history)
