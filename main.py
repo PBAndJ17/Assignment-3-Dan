@@ -13,7 +13,7 @@ except Exception:
 
 
 class ImageProcessor:
-    """ img handles using OpenCV"""
+    """ img handled using OpenCV"""
 
     def __init__(self, image_path=None):
         self.original_image = None
@@ -24,6 +24,7 @@ class ImageProcessor:
             self.load_image(image_path)
 
     def load_image(self, image_path):
+        '''Load image from given file'''
         self.original_image = cv2.imread(image_path)
         if self.original_image is None:
             raise ValueError(f"Could not load image from {image_path}")
@@ -49,13 +50,16 @@ class ImageProcessor:
         }
 
     def reset_to_original(self):
+        '''Resets the image to its original state'''
         self.current_image = self.original_image.copy()
 
     def grayscale(self):
+        '''Applies grayscale in image'''
         gray = cv2.cvtColor(self.current_image, cv2.COLOR_BGR2GRAY)
         self.current_image = cv2.cvtColor(gray, cv2.COLOR_GRAY2BGR)
 
     def blur(self, intensity):
+        '''APllies Blur to the image'''
         intensity = max(3, int(float(intensity)))  # FIX
         if intensity % 2 == 0:
             intensity += 1
@@ -65,17 +69,21 @@ class ImageProcessor:
 
 
     def edge_detection(self):
+        '''Apllies edge detection'''
         gray = cv2.cvtColor(self.current_image, cv2.COLOR_BGR2GRAY)
         edges = cv2.Canny(gray, 100, 200)
         self.current_image = cv2.cvtColor(edges, cv2.COLOR_GRAY2BGR)
 
     def adjust_brightness(self, factor):
+        '''Adjusts the brightness of the image'''
         self.current_image = cv2.convertScaleAbs(self.current_image, alpha=factor)
 
     def adjust_contrast(self, factor):
+        '''Adjust the contrast of the image'''
         self.current_image = cv2.convertScaleAbs(self.current_image, alpha=factor)
 
     def rotate_image(self, angle):
+        '''Rotate the image by 90, 180 or 270 degree'''
         if angle == 90:
             self.current_image = cv2.rotate(self.current_image, cv2.ROTATE_90_CLOCKWISE)
         elif angle == 180:
@@ -84,17 +92,22 @@ class ImageProcessor:
             self.current_image = cv2.rotate(self.current_image, cv2.ROTATE_90_COUNTERCLOCKWISE)
 
     def flip_image(self, direction):
+        '''Flip the image horizontally'''
         if direction == "horizontal":
             self.current_image = cv2.flip(self.current_image, 1)
         else:
             self.current_image = cv2.flip(self.current_image, 0)
 
     def resize_image(self, width, height):
+        '''Resize the image to the given widht and height'''
         self.current_image = cv2.resize(self.current_image, (int(width), int(height)))
 
 
 
 class ImageHistory:
+    '''
+    Manages undo redo FUnctionality.
+    '''
     def __init__(self, max_history=20):
         self.undo_stack = deque(maxlen=max_history)
         self.redo_stack = deque(maxlen=max_history)
@@ -131,6 +144,10 @@ class ImageHistory:
 
 
 class ImageApp:
+    '''
+    Handles GUI for the application.
+    '''
+
     
     def __init__(self, root):
         self.root = root
@@ -173,7 +190,7 @@ class ImageApp:
         left_frame = ttk.Frame(main_container)
         left_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
-        self.canvas = tk.Canvas(left_frame, bg="darkgray")
+        self.canvas = tk.Canvas(left_frame, bg="#1E1E1E")
         self.canvas.pack(fill=tk.BOTH, expand=True)
         
         self.canvas.bind("<Configure>", lambda e: self.display_image_on_canvas())
@@ -192,12 +209,12 @@ class ImageApp:
 
     def _create_control_panel(self, parent):
         title_label = ttk.Label(parent, text="Image Effects", font=("Arial", 10, "bold"))
-        title_label.pack(pady=10)
+        title_label.pack(pady=7)
 
-        ttk.Separator(parent, orient=tk.HORIZONTAL).pack(fill=tk.X, pady=5)
+        ttk.Separator(parent, orient=tk.HORIZONTAL).pack(fill=tk.X, pady=3)
 
         blur_frame = ttk.LabelFrame(parent, text="Blur Intensity", padding=10)
-        blur_frame.pack(fill=tk.X, pady=4)
+        blur_frame.pack(fill=tk.X, pady=3)
 
         self.blur_label = ttk.Label(blur_frame, text="Value: 5")
         self.blur_label.pack()
@@ -211,7 +228,7 @@ class ImageApp:
 
 
         brightness_frame = ttk.LabelFrame(parent, text="Brightness", padding=10)
-        brightness_frame.pack(fill=tk.X, pady=4)
+        brightness_frame.pack(fill=tk.X, pady=3)
 
         self.brightness_label = ttk.Label(brightness_frame, text="Value: 1.0")
         self.brightness_label.pack()
@@ -225,7 +242,7 @@ class ImageApp:
 
 
         contrast_frame = ttk.LabelFrame(parent, text="Contrast", padding=9)
-        contrast_frame.pack(fill=tk.X, pady=4)
+        contrast_frame.pack(fill=tk.X, pady=3)
 
         self.contrast_label = ttk.Label(contrast_frame, text="Value: 1.0")
         self.contrast_label.pack()
