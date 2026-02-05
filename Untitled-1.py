@@ -215,3 +215,17 @@ self.brightness_scale = ttk.Scale(
         )
         self.contrast_scale.pack(fill=tk.X, pady=5)
         self.contrast_scale.set(1.0)
+nt=tk.HORIZONTAL).pack(fill=tk.X, pady=5)
+
+        ttk.Button(parent, text="Grayscale", command=self._apply_grayscale).pack(fill=tk.X, pady=3)
+        ttk.Button(parent, text="Edge Detection", command=self._apply_edge_detection).pack(fill=tk.X, pady=3)
+
+        ttk.Separator(parent, orient=tk.HORIZONTAL).pack(fill=tk.X, pady=5)
+
+        ttk.Button(parent, text="Rotate 90°", command=lambda: self._apply_rotation(90)).pack(fill=tk.X, pady=3)
+        ttk.Button(parent, text="Rotate 180°", command=lambda: self._apply_rotation(180)).pack(fill=tk.X, pady=3)
+        ttk.Button(parent, text="Rotate 270°", command=lambda: self._apply_rotation(270)).pack(fill=tk.X, pady=3)
+        ttk.Button(parent, text="Flip Horizontal", command=lambda: self._apply_flip("horizontal")).pack(fill=tk.X, pady=3)
+        ttk.Button(parent, text="Flip Vertical", command=lambda: self._apply_flip("vertical")).pack(fill=tk.X, pady=3)
+
+        ttk.Separator(parent, orient=tk.HORIZONTAL).pack(fill=tk.X, pady=5)
