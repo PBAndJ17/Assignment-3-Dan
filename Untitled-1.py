@@ -91,3 +91,9 @@ if __name__ == "__main__":
         '''Save image state for undo'''
         self.undo_stack.append(image.copy())
         self.redo_stack.clear()
+        def undo(self):
+        '''undo the last action'''
+        if len(self.undo_stack) > 1:
+            self.redo_stack.append(self.undo_stack.pop())
+            return self.undo_stack[-1].copy()
+        return None
