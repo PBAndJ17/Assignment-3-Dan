@@ -80,6 +80,7 @@ class ImageProcessor:
         self.current_image = cv2.convertScaleAbs(self.current_image, alpha=factor)
 
     def rotate_image(self, angle):
+        '''Rotate the image by a fixed angle'''
         if angle == 90:
             self.current_image = cv2.rotate(self.current_image, cv2.ROTATE_90_CLOCKWISE)
         elif angle == 180:
@@ -88,12 +89,14 @@ class ImageProcessor:
             self.current_image = cv2.rotate(self.current_image, cv2.ROTATE_90_COUNTERCLOCKWISE)
 
     def flip_image(self, direction):
+        '''Flip the image horizontally or vertically'''
         if direction == "horizontal":
             self.current_image = cv2.flip(self.current_image, 1)
         else:
             self.current_image = cv2.flip(self.current_image, 0)
 
     def resize_image(self, width, height):
+        '''Resize the image using the given width and height'''
         self.current_image = cv2.resize(self.current_image, (int(width), int(height)))
 
 
