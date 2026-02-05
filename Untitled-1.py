@@ -198,3 +198,14 @@ self.brightness_scale = ttk.Scale(
         )
         self.brightness_scale.pack(fill=tk.X, pady=5)
         self.brightness_scale.set(1.0)
+
+
+        contrast_frame = ttk.LabelFrame(parent, text="Contrast", padding=10)
+        contrast_frame.pack(fill=tk.X, pady=5)
+
+        self.contrast_label = ttk.Label(contrast_frame, text="Value: 1.0")
+        self.contrast_label.pack()
+
+        self.contrast_scale = ttk.Scale(
+            contrast_frame, from_=0.5, to=3.0, orient=tk.HORIZONTAL,
+            command=self._on_contrast_change
