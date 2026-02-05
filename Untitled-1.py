@@ -44,4 +44,16 @@ if __name__ == "__main__":
             "width": w,
             "height": h,
             "dimensions": f"{w}x{h}"
-        }
+        }def reset_to_original(self):
+        self.current_image = self.original_image.copy()
+
+    def grayscale(self):
+        gray = cv2.cvtColor(self.current_image, cv2.COLOR_BGR2GRAY)
+        self.current_image = cv2.cvtColor(gray, cv2.COLOR_GRAY2BGR)
+
+    def blur(self, intensity):
+        intensity = max(3, int(float(intensity)))  # FIX
+        if intensity % 2 == 0:
+            intensity += 1
+        self.current_image = cv2.GaussianBlur(
+            self.current_image, (intensity, intensity), 0)
