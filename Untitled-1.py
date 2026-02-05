@@ -176,3 +176,19 @@ def clear(self):
 
         self.blur_label = ttk.Label(blur_frame, text="Value: 5")
         self.blur_label.pack()
+        elf.blur_label = ttk.Label(blur_frame, text="Value: 5")
+        self.blur_label.pack()
+
+        self.blur_scale = ttk.Scale(
+            blur_frame, from_=1, to=31, orient=tk.HORIZONTAL,
+            command=self._on_blur_change
+        )
+        self.blur_scale.pack(fill=tk.X, pady=5)
+        self.blur_scale.set(5)
+
+
+        brightness_frame = ttk.LabelFrame(parent, text="Brightness", padding=10)
+        brightness_frame.pack(fill=tk.X, pady=5)
+
+        self.brightness_label = ttk.Label(brightness_frame, text="Value: 1.0")
+        self.brightness_label.pack()
