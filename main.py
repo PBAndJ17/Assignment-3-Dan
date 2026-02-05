@@ -364,7 +364,6 @@ class ImageApp:
             self.processor.save_image(path)
             self.processor.image_path = path
 
-    # ---------- ACTIONS ----------
     def reset_image(self):
         self.processor.reset_to_original()
         self.history.clear()
