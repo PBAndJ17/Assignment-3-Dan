@@ -66,14 +66,17 @@ class ImageProcessor:
 
 
     def edge_detection(self):
+        '''Apply edge detection on image'''
         gray = cv2.cvtColor(self.current_image, cv2.COLOR_BGR2GRAY)
         edges = cv2.Canny(gray, 100, 200)
         self.current_image = cv2.cvtColor(edges, cv2.COLOR_GRAY2BGR)
 
     def adjust_brightness(self, factor):
+        '''Adjust brightness of image'''
         self.current_image = cv2.convertScaleAbs(self.current_image, alpha=factor)
 
     def adjust_contrast(self, factor):
+        '''Adjust contrast of the image'''
         self.current_image = cv2.convertScaleAbs(self.current_image, alpha=factor)
 
     def rotate_image(self, angle):
