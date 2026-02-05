@@ -126,7 +126,6 @@ class ImageHistory:
         return len(self.redo_stack) > 0
 
     def clear(self):
-        '''Clear history stacks'''
         self.undo_stack.clear()
         self.redo_stack.clear()
 
@@ -141,7 +140,7 @@ class ImageApp:
         self.processor = None
         self.history = ImageHistory()
         self.display_image = None
-        self.preview_base = None  # FIX: preview state
+        self.preview_base = None  
 
         self._create_menu_bar()
         self._create_main_layout()
@@ -278,7 +277,7 @@ class ImageApp:
         else:
             self.status_var.set("Ready | No image loaded")
 
-    # ---------- FILE ----------
+
     def open_image(self):
         path = filedialog.askopenfilename()
         if not path:
