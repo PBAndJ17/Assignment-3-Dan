@@ -146,3 +146,14 @@ def clear(self):
         edit_menu.add_command(label="Redo", command=self.redo_action)
         edit_menu.add_separator()
         edit_menu.add_command(label="Reset to Original", command=self.reset_image)
+        def _create_main_layout(self):
+        main_container = ttk.Frame(self.root)
+        main_container.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+
+        left_frame = ttk.Frame(main_container)
+        left_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+
+        self.canvas = tk.Canvas(left_frame, bg="gray20")
+        self.canvas.pack(fill=tk.BOTH, expand=True)
+
+        if DND_AVAILABLE:
