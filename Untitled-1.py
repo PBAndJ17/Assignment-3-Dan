@@ -57,3 +57,7 @@ if __name__ == "__main__":
             intensity += 1
         self.current_image = cv2.GaussianBlur(
             self.current_image, (intensity, intensity), 0)
+ def edge_detection(self):
+        gray = cv2.cvtColor(self.current_image, cv2.COLOR_BGR2GRAY)
+        edges = cv2.Canny(gray, 100, 200)
+        self.current_image = cv2.cvtColor(edges, cv2.COLOR_GRAY2BGR)
