@@ -132,8 +132,6 @@ class ImageHistory:
 
 
 class ImageApp:
-
-
     
     def __init__(self, root):
         self.root = root
@@ -171,7 +169,7 @@ class ImageApp:
 
     def _create_main_layout(self):
         main_container = ttk.Frame(self.root)
-        main_container.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+        main_container.pack(fill=tk.BOTH, expand=True, padx=4, pady=4)
 
         left_frame = ttk.Frame(main_container)
         left_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
@@ -185,53 +183,22 @@ class ImageApp:
             self.canvas.drop_target_register(DND_FILES)
             self.canvas.dnd_bind("<<Drop>>", self._on_drop)
         
-                # ----------- Scrollable Control Panel -----------
-        right_frame = ttk.Frame(main_container, width=260)
-        right_frame.pack(side=tk.RIGHT, fill=tk.Y, padx=(5, 0))
+        right_frame = ttk.Frame(main_container, width=250)
+        right_frame.pack(side=tk.RIGHT, fill=tk.BOTH, padx=(5, 0))
         right_frame.pack_propagate(False)
 
-        control_canvas = tk.Canvas(right_frame, borderwidth=0)
-        control_canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-
-        scrollbar = ttk.Scrollbar(
-            right_frame, orient="vertical", command=control_canvas.yview
-        )
-        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
-
-        control_canvas.configure(yscrollcommand=scrollbar.set)
-
-        # Frame inside canvas (actual control panel)
-        control_panel = ttk.Frame(control_canvas)
-        control_canvas.create_window((0, 0), window=control_panel, anchor="nw")
-
-        # Update scroll region when size changes
-        control_panel.bind(
-            "<Configure>",
-            lambda e: control_canvas.configure(
-                scrollregion=control_canvas.bbox("all")
-            )
-        )
-
-        # Mouse wheel scrolling
-        control_canvas.bind_all(
-            "<MouseWheel>",
-            lambda e: control_canvas.yview_scroll(-1 * int(e.delta / 120), "units")
-        )
-
-        # Build controls inside scrollable frame
-        self._create_control_panel(control_panel)
+        self._create_control_panel(right_frame)
         self._create_status_bar()
-
         self.display_image_on_canvas() 
 
     def _create_control_panel(self, parent):
-        title_label = ttk.Label(parent, text="Image Effects", font=("Times New Roman", 11, "bold"))
+        title_label = ttk.Label(parent, text="Image Effects", font=("Arial", 10, "bold"))
         title_label.pack(pady=10)
 
-        ttk.Separator(parent, orient=tk.HORIZONTAL).pack(fill=tk.X, pady=5)
+        ttk.Separator(parent, orient=tk.HORIZONTAL).pack(fill=tk.X, pady=4)
 
         blur_frame = ttk.LabelFrame(parent, text="Blur Intensity", padding=10)
-        blur_frame.pack(fill=tk.X, pady=5)
+        blur_frame.pack(fill=tk.X, pady=4)
 
         self.blur_label = ttk.Label(blur_frame, text="Value: 5")
         self.blur_label.pack()
@@ -240,12 +207,12 @@ class ImageApp:
             blur_frame, from_=1, to=31, orient=tk.HORIZONTAL,
             command=self._on_blur_change
         )
-        self.blur_scale.pack(fill=tk.X, pady=5)
+        self.blur_scale.pack(fill=tk.X, pady=4)
         self.blur_scale.set(5)
 
 
         brightness_frame = ttk.LabelFrame(parent, text="Brightness", padding=10)
-        brightness_frame.pack(fill=tk.X, pady=5)
+        brightness_frame.pack(fill=tk.X, pady=4)
 
         self.brightness_label = ttk.Label(brightness_frame, text="Value: 1.0")
         self.brightness_label.pack()
@@ -254,12 +221,12 @@ class ImageApp:
             brightness_frame, from_=0.5, to=3.0, orient=tk.HORIZONTAL,
             command=self._on_brightness_change
         )
-        self.brightness_scale.pack(fill=tk.X, pady=5)
+        self.brightness_scale.pack(fill=tk.X, pady=4)
         self.brightness_scale.set(1.0)
 
 
         contrast_frame = ttk.LabelFrame(parent, text="Contrast", padding=10)
-        contrast_frame.pack(fill=tk.X, pady=5)
+        contrast_frame.pack(fill=tk.X, pady=4)
 
         self.contrast_label = ttk.Label(contrast_frame, text="Value: 1.0")
         self.contrast_label.pack()
@@ -268,16 +235,16 @@ class ImageApp:
             contrast_frame, from_=0.5, to=3.0, orient=tk.HORIZONTAL,
             command=self._on_contrast_change
         )
-        self.contrast_scale.pack(fill=tk.X, pady=5)
+        self.contrast_scale.pack(fill=tk.X, pady=4)
         self.contrast_scale.set(1.0)
 
 
-        ttk.Separator(parent, orient=tk.HORIZONTAL).pack(fill=tk.X, pady=5)
+        ttk.Separator(parent, orient=tk.HORIZONTAL).pack(fill=tk.X, pady=4)
 
         ttk.Button(parent, text="Grayscale", command=self._apply_grayscale).pack(fill=tk.X, pady=3)
         ttk.Button(parent, text="Edge Detection", command=self._apply_edge_detection).pack(fill=tk.X, pady=3)
 
-        ttk.Separator(parent, orient=tk.HORIZONTAL).pack(fill=tk.X, pady=5)
+        ttk.Separator(parent, orient=tk.HORIZONTAL).pack(fill=tk.X, pady=4)
 
         ttk.Button(parent, text="Rotate 90°", command=lambda: self._apply_rotation(90)).pack(fill=tk.X, pady=3)
         ttk.Button(parent, text="Rotate 180°", command=lambda: self._apply_rotation(180)).pack(fill=tk.X, pady=3)
@@ -285,7 +252,7 @@ class ImageApp:
         ttk.Button(parent, text="Flip Horizontal", command=lambda: self._apply_flip("horizontal")).pack(fill=tk.X, pady=3)
         ttk.Button(parent, text="Flip Vertical", command=lambda: self._apply_flip("vertical")).pack(fill=tk.X, pady=3)
 
-        ttk.Separator(parent, orient=tk.HORIZONTAL).pack(fill=tk.X, pady=5)
+        ttk.Separator(parent, orient=tk.HORIZONTAL).pack(fill=tk.X, pady=4)
 
         resize_frame = ttk.LabelFrame(parent, text="Resize", padding=10)
         resize_frame.pack(fill=tk.X, pady=5)
@@ -298,7 +265,7 @@ class ImageApp:
         self.resize_height = ttk.Entry(resize_frame)
         self.resize_height.pack(fill=tk.X)
 
-        ttk.Button(resize_frame, text="Apply Resize", command=self._apply_resize).pack(fill=tk.X, pady=5)
+        ttk.Button(resize_frame, text="Apply Resize", command=self._apply_resize).pack(fill=tk.X, pady=4)
 
     def _create_status_bar(self):
         self.status_var = tk.StringVar(value="Ready | No image loaded")
