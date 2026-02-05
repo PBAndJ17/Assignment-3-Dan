@@ -156,4 +156,12 @@ def clear(self):
         self.canvas = tk.Canvas(left_frame, bg="gray20")
         self.canvas.pack(fill=tk.BOTH, expand=True)
 
-        if DND_AVAILABLE:
+        if DND_AVAILABLE:self.canvas.drop_target_register(DND_FILES)
+            self.canvas.dnd_bind("<<Drop>>", self._on_drop)
+        
+        right_frame = ttk.Frame(main_container, width=250)
+        right_frame.pack(side=tk.RIGHT, fill=tk.BOTH, padx=(5, 0))
+        right_frame.pack_propagate(False)
+
+        self._create_control_panel(right_frame)
+        self._create_status_bar()
