@@ -127,3 +127,22 @@ def clear(self):
         self._create_menu_bar()
         self._create_main_layout()
         self._update_ui_state()
+    def _create_menu_bar(self):
+        ''' this function creates the menu bar and help to getting image from file system '''
+        menubar = tk.Menu(self.root)
+        self.root.config(menu=menubar)
+
+        file_menu = tk.Menu(menubar, tearoff=0)
+        menubar.add_cascade(label="File", menu=file_menu)
+        file_menu.add_command(label="Open", command=self.open_image)
+        file_menu.add_command(label="Save", command=self.save_image)
+        file_menu.add_command(label="Save As", command=self.save_image_as)
+        file_menu.add_separator()
+        file_menu.add_command(label="Exit", command=self.root.quit)
+        """after editing image you can undo or redo the changes or reset to original image """
+        edit_menu = tk.Menu(menubar, tearoff=0)
+        menubar.add_cascade(label="Edit", menu=edit_menu)
+        edit_menu.add_command(label="Undo", command=self.undo_action)
+        edit_menu.add_command(label="Redo", command=self.redo_action)
+        edit_menu.add_separator()
+        edit_menu.add_command(label="Reset to Original", command=self.reset_image)
