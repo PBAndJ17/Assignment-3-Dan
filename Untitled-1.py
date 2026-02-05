@@ -34,3 +34,14 @@ def main():
 
 if __name__ == "__main__":
     main()
+ def get_image_info(self):
+        if self.current_image is None:
+            return None
+        h, w = self.current_image.shape[:2]
+        filename = os.path.basename(self.image_path) if self.image_path else "Unknown"
+        return {
+            "filename": filename,
+            "width": w,
+            "height": h,
+            "dimensions": f"{w}x{h}"
+        }
