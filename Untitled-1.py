@@ -75,3 +75,11 @@ if __name__ == "__main__":
             self.current_image = cv2.rotate(self.current_image, cv2.ROTATE_180)
         elif angle == 270:
             self.current_image = cv2.rotate(self.current_image, cv2.ROTATE_90_COUNTERCLOCKWISE)
+            def flip_image(self, direction):
+        if direction == "horizontal":
+            self.current_image = cv2.flip(self.current_image, 1)
+        else:
+            self.current_image = cv2.flip(self.current_image, 0)
+
+    def resize_image(self, width, height):
+        self.current_image = cv2.resize(self.current_image, (int(width), int(height)))
