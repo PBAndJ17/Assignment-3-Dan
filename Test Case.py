@@ -62,6 +62,8 @@ class ImageProcessor:
         self.current_image = cv2.GaussianBlur(
             self.current_image, (intensity, intensity), 0)
 
+
+
     def edge_detection(self):
         gray = cv2.cvtColor(self.current_image, cv2.COLOR_BGR2GRAY)
         edges = cv2.Canny(gray, 100, 200)
@@ -89,6 +91,7 @@ class ImageProcessor:
 
     def resize_image(self, width, height):
         self.current_image = cv2.resize(self.current_image, (int(width), int(height)))
+
 
 
 class ImageHistory:
@@ -129,7 +132,7 @@ class ImageHistory:
 
 
 class ImageApp:
-
+    
     def __init__(self, root):
         self.root = root
         self.root.title("Image Processing Application")
@@ -140,17 +143,10 @@ class ImageApp:
         self.display_image = None
         self.preview_base = None  # FIX: preview state
 
-        # -------------------- ADDED: Zoom settings --------------------
-        self.zoom_factor = 1.0
-        self.zoom_step = 0.1
-        self.min_zoom = 0.2
-        self.max_zoom = 5.0
-        # --------------------------------------------------------------
-
         self._create_menu_bar()
         self._create_main_layout()
         self._update_ui_state()
-
+   
     def _create_menu_bar(self):
         ''' this function creates the menu bar and help to getting image from file system '''
         menubar = tk.Menu(self.root)
@@ -180,26 +176,51 @@ class ImageApp:
 
         self.canvas = tk.Canvas(left_frame, bg="gray20")
         self.canvas.pack(fill=tk.BOTH, expand=True)
-
+        
         self.canvas.bind("<Configure>", lambda e: self.display_image_on_canvas())
-
-        # -------------------- ADDED: Mouse wheel zoom bindings --------------------
-        self.canvas.bind("<MouseWheel>", self._on_mouse_wheel)  # Windows / macOS
-        self.canvas.bind("<Button-4>", self._on_mouse_wheel)    # Linux scroll up
-        self.canvas.bind("<Button-5>", self._on_mouse_wheel)    # Linux scroll down
-        # ------------------------------------------------------------------------
 
         if DND_AVAILABLE:
             self.canvas.drop_target_register(DND_FILES)
             self.canvas.dnd_bind("<<Drop>>", self._on_drop)
-
-        right_frame = ttk.Frame(main_container, width=250)
-        right_frame.pack(side=tk.RIGHT, fill=tk.BOTH, padx=(5, 0))
+        
+                # ----------- Scrollable Control Panel -----------
+        right_frame = ttk.Frame(main_container, width=260)
+        right_frame.pack(side=tk.RIGHT, fill=tk.Y, padx=(5, 0))
         right_frame.pack_propagate(False)
 
-        self._create_control_panel(right_frame)
+        control_canvas = tk.Canvas(right_frame, borderwidth=0)
+        control_canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+
+        scrollbar = ttk.Scrollbar(
+            right_frame, orient="vertical", command=control_canvas.yview
+        )
+        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+
+        control_canvas.configure(yscrollcommand=scrollbar.set)
+
+        # Frame inside canvas (actual control panel)
+        control_panel = ttk.Frame(control_canvas)
+        control_canvas.create_window((0, 0), window=control_panel, anchor="nw")
+
+        # Update scroll region when size changes
+        control_panel.bind(
+            "<Configure>",
+            lambda e: control_canvas.configure(
+                scrollregion=control_canvas.bbox("all")
+            )
+        )
+
+        # Mouse wheel scrolling
+        control_canvas.bind_all(
+            "<MouseWheel>",
+            lambda e: control_canvas.yview_scroll(-1 * int(e.delta / 120), "units")
+        )
+
+        # Build controls inside scrollable frame
+        self._create_control_panel(control_panel)
         self._create_status_bar()
-        self.display_image_on_canvas()
+
+        self.display_image_on_canvas() 
 
     def _create_control_panel(self, parent):
         title_label = ttk.Label(parent, text="Image Effects", font=("Arial", 12, "bold"))
@@ -220,6 +241,7 @@ class ImageApp:
         self.blur_scale.pack(fill=tk.X, pady=5)
         self.blur_scale.set(5)
 
+
         brightness_frame = ttk.LabelFrame(parent, text="Brightness", padding=10)
         brightness_frame.pack(fill=tk.X, pady=5)
 
@@ -233,6 +255,7 @@ class ImageApp:
         self.brightness_scale.pack(fill=tk.X, pady=5)
         self.brightness_scale.set(1.0)
 
+
         contrast_frame = ttk.LabelFrame(parent, text="Contrast", padding=10)
         contrast_frame.pack(fill=tk.X, pady=5)
 
@@ -245,6 +268,7 @@ class ImageApp:
         )
         self.contrast_scale.pack(fill=tk.X, pady=5)
         self.contrast_scale.set(1.0)
+
 
         ttk.Separator(parent, orient=tk.HORIZONTAL).pack(fill=tk.X, pady=5)
 
@@ -292,6 +316,8 @@ class ImageApp:
             return
         self._load_image_from_path(path)
 
+
+
     def _parse_drop_files(self, data):
         try:
             items = self.root.tk.splitlist(data)
@@ -309,7 +335,6 @@ class ImageApp:
     def _load_image_from_path(self, path):
         try:
             self.preview_base = None
-            self.zoom_factor = 1.0  # ADDED: reset zoom when new image loads
             self.processor = ImageProcessor(path)
             self.history.clear()
             self.history.save_state(self.processor.current_image)
@@ -360,7 +385,6 @@ class ImageApp:
         self.history.clear()
         self.history.save_state(self.processor.current_image)
         self.preview_base = None
-        self.zoom_factor = 1.0  # ADDED: reset zoom when reset image
         self.display_image_on_canvas()
 
     def undo_action(self):
@@ -440,24 +464,6 @@ class ImageApp:
             self.processor.adjust_contrast(value)
             self.display_image_on_canvas()
 
-    # -------------------- ADDED: Mouse wheel zoom handler --------------------
-    def _on_mouse_wheel(self, event):
-        if not self.processor or self.processor.current_image is None:
-            return
-
-        # Determine scroll direction (cross-platform)
-        if hasattr(event, "delta") and event.delta != 0:
-            direction = 1 if event.delta > 0 else -1
-        else:
-            direction = 1 if getattr(event, "num", None) == 4 else -1
-
-        # Update zoom factor
-        self.zoom_factor += direction * self.zoom_step
-        self.zoom_factor = max(self.min_zoom, min(self.zoom_factor, self.max_zoom))
-
-        self.display_image_on_canvas()
-    # -----------------------------------------------------------------------
-
     # ---------- DISPLAY ----------
     def display_image_on_canvas(self):
         self.canvas.delete("all")
@@ -477,23 +483,19 @@ class ImageApp:
         img_rgb = cv2.cvtColor(self.processor.current_image, cv2.COLOR_BGR2RGB)
         pil = Image.fromarray(img_rgb)
 
-        # -------------------- ADDED: Apply zoom then fit to canvas --------------------
-        base_w, base_h = pil.size
-        zoomed_size = (int(base_w * self.zoom_factor), int(base_h * self.zoom_factor))
-        pil = pil.resize(zoomed_size, Image.LANCZOS)
-
         if cw > 1 and ch > 1:
             pil.thumbnail((cw - 10, ch - 10))
-        # ---------------------------------------------------------------------------
 
         self.display_image = ImageTk.PhotoImage(pil)
         self.canvas.create_image(cw // 2, ch // 2, image=self.display_image)
+
 
 
 def main():
     root = TkinterDnD.Tk() if DND_AVAILABLE else tk.Tk()
     ImageApp(root)
     root.mainloop()
+
 
 
 if __name__ == "__main__":
