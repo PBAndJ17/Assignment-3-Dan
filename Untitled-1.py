@@ -192,3 +192,9 @@ def clear(self):
 
         self.brightness_label = ttk.Label(brightness_frame, text="Value: 1.0")
         self.brightness_label.pack()
+self.brightness_scale = ttk.Scale(
+            brightness_frame, from_=0.5, to=3.0, orient=tk.HORIZONTAL,
+            command=self._on_brightness_change
+        )
+        self.brightness_scale.pack(fill=tk.X, pady=5)
+        self.brightness_scale.set(1.0)
