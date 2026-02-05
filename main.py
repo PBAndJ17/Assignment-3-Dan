@@ -153,6 +153,46 @@ class ImageApp:
         self.root = root
         self.root.title("Image Processing Application")
         self.root.geometry("1200x800")
+        self._apply_dark_mode()
+        
+    def _apply_dark_mode(self):
+        """Apply dark theme styles to ttk widgets."""
+        style = ttk.Style(self.root)
+
+        # Use a theme that supports color changes
+        try:
+            style.theme_use("clam")
+        except Exception:
+            pass
+
+        # Base background
+        style.configure(".", background="#1E1E1E", foreground="white")
+
+        # Frames
+        style.configure("TFrame", background="#1E1E1E")
+        style.configure("TLabelFrame", background="#1E1E1E", foreground="white")
+        style.configure("TLabelFrame.Label", background="#1E1E1E", foreground="white")
+
+        # Labels
+        style.configure("TLabel", background="#1E1E1E", foreground="white")
+
+        # Buttons
+        style.configure("TButton", background="#2D2D2D", foreground="white", padding=6)
+        style.map(
+            "TButton",
+            background=[("active", "#3A3A3A")],
+            foreground=[("active", "white")]
+        )
+
+        # Entry boxes
+        style.configure("TEntry", fieldbackground="#2D2D2D", foreground="white")
+
+        # Separators
+        style.configure("TSeparator", background="#3C3C3C")
+
+        # Status bar
+        style.configure("Status.TLabel", background="#111111", foreground="white")
+
 
         self.processor = None
         self.history = ImageHistory()
