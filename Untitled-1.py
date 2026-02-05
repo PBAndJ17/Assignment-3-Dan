@@ -97,3 +97,10 @@ if __name__ == "__main__":
             self.redo_stack.append(self.undo_stack.pop())
             return self.undo_stack[-1].copy()
         return None
+def redo(self):
+        '''Redo the last action'''
+        if self.redo_stack:
+            img = self.redo_stack.pop()
+            self.undo_stack.append(img.copy())
+            return img.copy()
+        return None
