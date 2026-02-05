@@ -104,3 +104,8 @@ def redo(self):
             self.undo_stack.append(img.copy())
             return img.copy()
         return None
+def can_undo(self):
+        return len(self.undo_stack) > 1
+
+    def can_redo(self):
+        return len(self.redo_stack) > 0
