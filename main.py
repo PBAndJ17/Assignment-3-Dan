@@ -402,7 +402,6 @@ class ImageApp:
         self.preview_base = None
         self.display_image_on_canvas()
 
-    # ---------- SLIDERS (FIXED) ----------
     def _on_blur_change(self, value):
         self.blur_label.config(text=f"Value: {int(float(value))}")
         if self.processor:
@@ -432,7 +431,6 @@ class ImageApp:
             self.processor.adjust_contrast(value)
             self.display_image_on_canvas()
 
-    # ---------- DISPLAY ----------
     def display_image_on_canvas(self):
         self.canvas.delete("all")
         cw, ch = self.canvas.winfo_width(), self.canvas.winfo_height()
