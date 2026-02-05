@@ -165,3 +165,14 @@ def clear(self):
 
         self._create_control_panel(right_frame)
         self._create_status_bar()
+ def _create_control_panel(self, parent):
+        title_label = ttk.Label(parent, text="Image Effects", font=("Arial", 12, "bold"))
+        title_label.pack(pady=10)
+
+        ttk.Separator(parent, orient=tk.HORIZONTAL).pack(fill=tk.X, pady=5)
+
+        blur_frame = ttk.LabelFrame(parent, text="Blur Intensity", padding=10)
+        blur_frame.pack(fill=tk.X, pady=5)
+
+        self.blur_label = ttk.Label(blur_frame, text="Value: 5")
+        self.blur_label.pack()
