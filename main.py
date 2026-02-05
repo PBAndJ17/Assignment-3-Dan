@@ -59,7 +59,7 @@ class ImageProcessor:
         self.current_image = cv2.cvtColor(gray, cv2.COLOR_GRAY2BGR)
 
     def blur(self, intensity):
-        '''APllies Blur to the image'''
+        '''APllies Gaussian Blur to the image'''
         intensity = max(3, int(float(intensity)))  # FIX
         if intensity % 2 == 0:
             intensity += 1
