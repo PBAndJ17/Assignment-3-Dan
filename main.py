@@ -5,6 +5,11 @@ import numpy as np
 from PIL import Image, ImageTk
 import os
 from collections import deque
+try:
+    from tkinterdnd2 import DND_FILES, TkinterDnD
+    DND_AVAILABLE = True
+except Exception:
+    DND_AVAILABLE = False
 
 
 class ImageProcessor:
@@ -100,6 +105,7 @@ class ImageProcessor:
         self.current_image = cv2.resize(self.current_image, (int(width), int(height)))
 
 
+
 class ImageHistory:
     def __init__(self, max_history=20):
         self.undo_stack = deque(maxlen=max_history)
@@ -138,6 +144,7 @@ class ImageHistory:
 
 
 class ImageApp:
+    
     def __init__(self, root):
         self.root = root
         self.root.title("Image Processing Application")
@@ -151,8 +158,9 @@ class ImageApp:
         self._create_menu_bar()
         self._create_main_layout()
         self._update_ui_state()
-
+   
     def _create_menu_bar(self):
+        ''' this function creates the menu bar and help to getting image from file system '''
         menubar = tk.Menu(self.root)
         self.root.config(menu=menubar)
 
@@ -163,7 +171,7 @@ class ImageApp:
         file_menu.add_command(label="Save As", command=self.save_image_as)
         file_menu.add_separator()
         file_menu.add_command(label="Exit", command=self.root.quit)
-
+        """after editing image you can undo or redo the changes or reset to original image """
         edit_menu = tk.Menu(menubar, tearoff=0)
         menubar.add_cascade(label="Edit", menu=edit_menu)
         edit_menu.add_command(label="Undo", command=self.undo_action)
@@ -181,6 +189,10 @@ class ImageApp:
         self.canvas = tk.Canvas(left_frame, bg="gray20")
         self.canvas.pack(fill=tk.BOTH, expand=True)
 
+        if DND_AVAILABLE:
+            self.canvas.drop_target_register(DND_FILES)
+            self.canvas.dnd_bind("<<Drop>>", self._on_drop)
+        
         right_frame = ttk.Frame(main_container, width=250)
         right_frame.pack(side=tk.RIGHT, fill=tk.BOTH, padx=(5, 0))
         right_frame.pack_propagate(False)
@@ -277,12 +289,57 @@ class ImageApp:
         path = filedialog.askopenfilename()
         if not path:
             return
-        self.processor = ImageProcessor(path)
-        self.history.clear()
-        self.history.save_state(self.processor.current_image)
-        self.preview_base = None
-        self.display_image_on_canvas()
-        self._update_ui_state()
+        self._load_image_from_path(path)
+
+
+
+    def _parse_drop_files(self, data):
+        try:
+            items = self.root.tk.splitlist(data)
+        except Exception:
+            items = [data]
+
+        paths = []
+        for item in items:
+            item = str(item).strip()
+            if item.startswith("{") and item.endswith("}"):
+                item = item[1:-1]
+            paths.append(item)
+        return paths
+
+    def _load_image_from_path(self, path):
+        try:
+            self.processor = ImageProcessor(path)
+            self.history.clear()
+            self.history.save_state(self.processor.current_image)
+            self.preview_base = None
+            self.display_image_on_canvas()
+            self._update_ui_state()
+        except Exception as e:
+            messagebox.showerror("Open image failed", str(e))
+
+    def _on_drop(self, event):
+        paths = self._parse_drop_files(getattr(event, "data", ""))
+        if not paths:
+            return
+        path = paths[0]
+
+        if os.path.isdir(path):
+            messagebox.showwarning("Drop an image", "Please drop an image file, not a folder.")
+            return
+        if not os.path.isfile(path):
+            messagebox.showwarning("Drop failed", "Dropped item is not a valid file.")
+            return
+
+        ext = os.path.splitext(path)[1].lower()
+        if ext not in {".png", ".jpg", ".jpeg", ".bmp", ".tif", ".tiff", ".gif", ".webp"}:
+            messagebox.showwarning(
+                "Unsupported file",
+                "Drop a supported image: png, jpg, jpeg, bmp, tif, tiff, gif, webp."
+            )
+            return
+
+        self._load_image_from_path(path)
 
     def save_image(self):
         if not self.processor:
@@ -400,9 +457,10 @@ class ImageApp:
 
 
 def main():
-    root = tk.Tk()
+    root = TkinterDnD.Tk() if DND_AVAILABLE else tk.Tk()
     ImageApp(root)
     root.mainloop()
+
 
 
 if __name__ == "__main__":
