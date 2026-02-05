@@ -109,3 +109,7 @@ def can_undo(self):
 
     def can_redo(self):
         return len(self.redo_stack) > 0
+def clear(self):
+        '''Clear history stacks'''
+        self.undo_stack.clear()
+        self.redo_stack.clear()
