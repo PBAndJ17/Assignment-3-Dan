@@ -13,7 +13,7 @@ except Exception:
 
 
 class ImageProcessor:
-    """ Uses OpenCV to handle img processing"""
+    """ img handles using OpenCV"""
 
     def __init__(self, image_path=None):
         self.original_image = None
@@ -24,22 +24,19 @@ class ImageProcessor:
             self.load_image(image_path)
 
     def load_image(self, image_path):
-        '''Load img from file'''
         self.original_image = cv2.imread(image_path)
         if self.original_image is None:
-            raise ValueError(f"Image from {image_path} could not be loaded")
+            raise ValueError(f"Could not load image from {image_path}")
         self.current_image = self.original_image.copy()
         self.image_path = image_path
 
     def save_image(self, file_path):
-        '''Save the image to File'''
         if self.current_image is None:
             raise ValueError("No image to save")
         if not cv2.imwrite(file_path, self.current_image):
             raise ValueError("Failed to save image")
 
     def get_image_info(self):
-        '''Return the img information for the status bar'''
         if self.current_image is None:
             return None
         h, w = self.current_image.shape[:2]
@@ -52,16 +49,13 @@ class ImageProcessor:
         }
 
     def reset_to_original(self):
-        '''Reset to the original img'''
         self.current_image = self.original_image.copy()
 
     def grayscale(self):
-        '''Convert image to grayscale'''
         gray = cv2.cvtColor(self.current_image, cv2.COLOR_BGR2GRAY)
         self.current_image = cv2.cvtColor(gray, cv2.COLOR_GRAY2BGR)
 
     def blur(self, intensity):
-        '''Apply blur with adjustable intensity'''
         intensity = max(3, int(float(intensity)))  # FIX
         if intensity % 2 == 0:
             intensity += 1
@@ -71,21 +65,17 @@ class ImageProcessor:
 
 
     def edge_detection(self):
-        '''Apply edge detection on image'''
         gray = cv2.cvtColor(self.current_image, cv2.COLOR_BGR2GRAY)
         edges = cv2.Canny(gray, 100, 200)
         self.current_image = cv2.cvtColor(edges, cv2.COLOR_GRAY2BGR)
 
     def adjust_brightness(self, factor):
-        '''Adjust brightness of image'''
         self.current_image = cv2.convertScaleAbs(self.current_image, alpha=factor)
 
     def adjust_contrast(self, factor):
-        '''Adjust contrast of the image'''
         self.current_image = cv2.convertScaleAbs(self.current_image, alpha=factor)
 
     def rotate_image(self, angle):
-        '''Rotate the image by a fixed angle'''
         if angle == 90:
             self.current_image = cv2.rotate(self.current_image, cv2.ROTATE_90_CLOCKWISE)
         elif angle == 180:
@@ -94,14 +84,12 @@ class ImageProcessor:
             self.current_image = cv2.rotate(self.current_image, cv2.ROTATE_90_COUNTERCLOCKWISE)
 
     def flip_image(self, direction):
-        '''Flip the image horizontally or vertically'''
         if direction == "horizontal":
             self.current_image = cv2.flip(self.current_image, 1)
         else:
             self.current_image = cv2.flip(self.current_image, 0)
 
     def resize_image(self, width, height):
-        '''Resize the image using the given width and height'''
         self.current_image = cv2.resize(self.current_image, (int(width), int(height)))
 
 
@@ -209,41 +197,44 @@ class ImageApp:
         blur_frame = ttk.LabelFrame(parent, text="Blur Intensity", padding=10)
         blur_frame.pack(fill=tk.X, pady=5)
 
+        self.blur_label = ttk.Label(blur_frame, text="Value: 5")
+        self.blur_label.pack()
+
         self.blur_scale = ttk.Scale(
             blur_frame, from_=1, to=31, orient=tk.HORIZONTAL,
             command=self._on_blur_change
         )
-        self.blur_scale.set(5)
         self.blur_scale.pack(fill=tk.X, pady=5)
+        self.blur_scale.set(5)
 
-        self.blur_label = ttk.Label(blur_frame, text="Value: 5")
-        self.blur_label.pack()
 
         brightness_frame = ttk.LabelFrame(parent, text="Brightness", padding=10)
         brightness_frame.pack(fill=tk.X, pady=5)
+
+        self.brightness_label = ttk.Label(brightness_frame, text="Value: 1.0")
+        self.brightness_label.pack()
 
         self.brightness_scale = ttk.Scale(
             brightness_frame, from_=0.5, to=3.0, orient=tk.HORIZONTAL,
             command=self._on_brightness_change
         )
-        self.brightness_scale.set(1.0)
         self.brightness_scale.pack(fill=tk.X, pady=5)
+        self.brightness_scale.set(1.0)
 
-        self.brightness_label = ttk.Label(brightness_frame, text="Value: 1.0")
-        self.brightness_label.pack()
 
         contrast_frame = ttk.LabelFrame(parent, text="Contrast", padding=10)
         contrast_frame.pack(fill=tk.X, pady=5)
+
+        self.contrast_label = ttk.Label(contrast_frame, text="Value: 1.0")
+        self.contrast_label.pack()
 
         self.contrast_scale = ttk.Scale(
             contrast_frame, from_=0.5, to=3.0, orient=tk.HORIZONTAL,
             command=self._on_contrast_change
         )
-        self.contrast_scale.set(1.0)
         self.contrast_scale.pack(fill=tk.X, pady=5)
+        self.contrast_scale.set(1.0)
 
-        self.contrast_label = ttk.Label(contrast_frame, text="Value: 1.0")
-        self.contrast_label.pack()
 
         ttk.Separator(parent, orient=tk.HORIZONTAL).pack(fill=tk.X, pady=5)
 
