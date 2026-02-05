@@ -106,16 +106,19 @@ class ImageHistory:
         self.redo_stack = deque(maxlen=max_history)
 
     def save_state(self, image):
+        '''Save image state for undo'''
         self.undo_stack.append(image.copy())
         self.redo_stack.clear()
 
     def undo(self):
+        '''undo the last action'''
         if len(self.undo_stack) > 1:
             self.redo_stack.append(self.undo_stack.pop())
             return self.undo_stack[-1].copy()
         return None
 
     def redo(self):
+        '''Redo the last action'''
         if self.redo_stack:
             img = self.redo_stack.pop()
             self.undo_stack.append(img.copy())
@@ -129,6 +132,7 @@ class ImageHistory:
         return len(self.redo_stack) > 0
 
     def clear(self):
+        '''Clear history stacks'''
         self.undo_stack.clear()
         self.redo_stack.clear()
 
