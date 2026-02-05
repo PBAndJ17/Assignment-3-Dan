@@ -18,7 +18,13 @@ def main():
     root = TkinterDnD.Tk() if DND_AVAILABLE else tk.Tk()
     ImageApp(root)
     root.mainloop()
-
+ def load_image(self, image_path):
+        self.original_image = cv2.imread(image_path)
+        if self.original_image is None:
+            raise ValueError(f"Could not load image from {image_path}")
+        self.current_image = self.original_image.copy()
+        self.image_path = image_path
+        
 
 
 if __name__ == "__main__":
